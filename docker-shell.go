@@ -9,10 +9,22 @@ import (
     "strings"
 )
 
+const version = "0.1.0"
+
 func main() {
     if len(os.Args) < 2 {
         fmt.Println("Usage: docker-shell [additional docker run options] <DOCKER_IMAGE>")
         os.Exit(1)
+    }
+
+    // Check for --version and --help flags
+    switch os.Args[1] {
+    case "--version":
+        fmt.Println(version)
+        os.Exit(0)
+    case "--help":
+        printHelp()
+        os.Exit(0)
     }
 
     // Get the df output
