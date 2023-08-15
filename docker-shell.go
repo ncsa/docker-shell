@@ -15,13 +15,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	mountPoints, err := getMountPoints()
-	if err != nil {
-		log.Fatalf("Error getting mount points: %v", err)
-	}
+  // Get the df output
+  dfMap, err := getDfOutputMap()
+  if err != nil {
+    log.Fatalf("Error getting df output: %v", err)
+  }
 
-	volumeArgs := generateVolumeArgs(mountPoints)
+  // Detect the non-loopback block device mount points
+	mountPoints := getMountPoints(dfMap)
 
+  // Generate the volume arguments
+	volumeArgs := generateVolumeArgs(dfMap, mountPoints)
+
+  // Generate the custom hostname
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalf("Error getting hostname: %v", err)
@@ -47,33 +53,13 @@ func main() {
 	cmdArgs = append(cmdArgs, os.Args[1:]...)
 	cmdArgs = append(cmdArgs, "/bin/bash")
 
+  // Run the docker command
 	cmd := exec.Command("docker", cmdArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("Failed to run docker command: %v", err)
 	}
-}
-
-func getMountPoints() ([]string, error) {
-	var mountPoints []string
-
-	cmd := exec.Command("df", "--output=source")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	devices := strings.Split(string(output), "\n")
-	for _, device := range devices {
-		if strings.HasPrefix(device, "/dev/") {
-			if isBlockDevice(device) && !isLoopDevice(device) {
-				mountPoints = append(mountPoints, device)
-			}
-		}
-	}
-
-	return mountPoints, nil
 }
 
 func isBlockDevice(device string) bool {
@@ -91,15 +77,46 @@ func isLoopDevice(device string) bool {
 	return cmd.Run() == nil
 }
 
-func generateVolumeArgs(mountPoints []string) []string {
-	var volumeArgs []string
-	for _, device := range mountPoints {
-		cmd := exec.Command("sh", "-c", fmt.Sprintf("df --output=target,source | grep %s | awk '{print $1}'", device))
-		output, err := cmd.Output()
-		if err != nil {
+func getDfOutputMap() (map[string]string, error) {
+	mapping := make(map[string]string)
+
+	cmd := exec.Command("df", "--output=source,target")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
 			continue
 		}
-		mount := strings.TrimSpace(string(output))
+		device := fields[0]
+		mount := fields[1]
+
+		if strings.HasPrefix(device, "/dev/") {
+			mapping[device] = mount
+		}
+	}
+
+	return mapping, nil
+}
+
+func getMountPoints(dfMap map[string]string) []string {
+	var mountPoints []string
+	for device := range dfMap {
+		if isBlockDevice(device) && !isLoopDevice(device) {
+			mountPoints = append(mountPoints, device)
+		}
+	}
+	return mountPoints
+}
+
+func generateVolumeArgs(dfMap map[string]string, mountPoints []string) []string {
+	var volumeArgs []string
+	for _, device := range mountPoints {
+		mount := dfMap[device]
 		if mount != "/" {
 			volumeArgs = append(volumeArgs, "--volume", fmt.Sprintf("%s:%s", mount, mount))
 		}
