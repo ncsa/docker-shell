@@ -12,8 +12,19 @@ import (
 const version = "0.1.0"
 
 func main() {
+    for _, arg := range os.Args[1:] {
+        switch arg {
+            case "--version":
+                fmt.Println(version)
+                os.Exit(0)
+            case "--help":
+                printHelp()
+                os.Exit(0)
+        }
+    }
+
     if len(os.Args) < 2 {
-        fmt.Println("Usage: docker-shell [additional docker run options] <DOCKER_IMAGE>")
+        printHelp()
         os.Exit(1)
     }
 
