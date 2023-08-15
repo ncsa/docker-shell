@@ -38,6 +38,27 @@ func main() {
     fmt.Println(customHostname)
 
     // Constructing the docker run command
+    cmdArgs := constructDockerRunCommand(volumeArgs, customHostname, os.Args[1:])
+
+    // Run the docker command
+    runDockerCommand(cmdArgs)
+}
+
+// printHelp displays the help message
+func printHelp() {
+    fmt.Println(`
+Usage: docker-shell [additional docker run options] <DOCKER_IMAGE>
+
+Options:
+  --version    Display the version of the script
+  --help       Display this help message
+
+This tool is designed to provide an easy way to run a Docker container with system volumes mounted.
+`)
+}
+
+// constructDockerRunCommand constructs the arguments for the docker run command.
+func constructDockerRunCommand(volumeArgs []string, customHostname string, additionalArgs []string) []string {
     cmdArgs := []string{
         "run", "-it",
         "--hostname", customHostname,
@@ -50,11 +71,14 @@ func main() {
         "--env", fmt.Sprintf("USER=%s", os.Getenv("USER")),
     }
     cmdArgs = append(cmdArgs, volumeArgs...)
-    cmdArgs = append(cmdArgs, os.Args[1:]...)
+    cmdArgs = append(cmdArgs, additionalArgs...)
     cmdArgs = append(cmdArgs, "/bin/bash")
+    return cmdArgs
+}
 
-    // Run the docker command
-    cmd := exec.Command("docker", cmdArgs...)
+// runDockerCommand executes the docker command with given arguments.
+func runDockerCommand(args []string) {
+    cmd := exec.Command("docker", args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
     if err := cmd.Run(); err != nil {
@@ -62,6 +86,7 @@ func main() {
     }
 }
 
+// isBlockDevice checks if a given device is a block device.
 func isBlockDevice(device string) bool {
     cmd := exec.Command("ls", "-l", device)
     var out bytes.Buffer
@@ -72,11 +97,13 @@ func isBlockDevice(device string) bool {
     return strings.HasPrefix(out.String(), "b")
 }
 
+// isLoopDevice checks if a given device is a loop device.
 func isLoopDevice(device string) bool {
     cmd := exec.Command("losetup", device)
     return cmd.Run() == nil
 }
 
+// getDfOutputMap creates a mapping of device names to their corresponding mount points.
 func getDfOutputMap() (map[string]string, error) {
     mapping := make(map[string]string)
 
@@ -103,6 +130,7 @@ func getDfOutputMap() (map[string]string, error) {
     return mapping, nil
 }
 
+// getMountPoints retrieves the mount points of non-loopback block devices.
 func getMountPoints(dfMap map[string]string) []string {
     var mountPoints []string
     for device := range dfMap {
@@ -113,6 +141,7 @@ func getMountPoints(dfMap map[string]string) []string {
 	return mountPoints
 }
 
+// generateVolumeArgs generates the volume arguments for the docker command.
 func generateVolumeArgs(dfMap map[string]string, mountPoints []string) []string {
     var volumeArgs []string
     for _, device := range mountPoints {
