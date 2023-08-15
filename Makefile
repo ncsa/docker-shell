@@ -13,7 +13,7 @@ build:
 	$(GO_BUILD) -o $(BIN_NAME) docker-shell.go
 
 install: build
-	install -m 755 $(BIN_NAME) $(PREFIX)/bin
+	install -D -m 755 $(BIN_NAME) $(PREFIX)/bin
 
 clean:
 	rm -f $(BIN_NAME)
