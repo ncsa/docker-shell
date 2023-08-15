@@ -94,12 +94,12 @@ func isLoopDevice(device string) bool {
 func generateVolumeArgs(mountPoints []string) []string {
 	var volumeArgs []string
 	for _, device := range mountPoints {
-		cmd := exec.Command("df", "--output=target,source")
+		cmd := exec.Command("sh", "-c", fmt.Sprintf("df --output=target,source | grep %s | awk '{print $1}'", device))
 		output, err := cmd.Output()
 		if err != nil {
 			continue
 		}
-		mount := strings.Split(string(output), "\n")[0]
+		mount := strings.TrimSpace(string(output))
 		if mount != "/" {
 			volumeArgs = append(volumeArgs, "--volume", fmt.Sprintf("%s:%s", mount, mount))
 		}
