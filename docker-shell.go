@@ -10,7 +10,7 @@ import (
     "encoding/json"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 func main() {
     // Remove 'shell' if it's the first argument. Needed for compatibility with Docker plugin system
