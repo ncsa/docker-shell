@@ -104,6 +104,7 @@ func runDockerCommand(args []string) {
     cmd := exec.Command("docker", args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
+    cmd.Stdin = os.Stdin
     if err := cmd.Run(); err != nil {
         log.Fatalf("Failed to run docker command: %v", err)
     }
