@@ -128,7 +128,7 @@ func outputPluginMetadata() {
         SchemaVersion:   "0.1.0",
         Vendor:          "Matthew Krafczyk",
         Version:         version,
-        ShortDescription: "A utility designed to mimic the `singularity shell` command.",
+        ShortDescription: "Docker Shell",
         URL:              "https://github.com/ncsa/docker-shell",
     }
 
