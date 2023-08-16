@@ -132,7 +132,7 @@ func outputPluginMetadata() {
         URL:              "https://github.com/ncsa/docker-shell",
     }
 
-    jsonOutput, err := json.MarshallIndent(metadata, "", "    ")
+    jsonOutput, err := json.MarshalIndent(metadata, "", "    ")
     if err != nil {
         log.Fatalf("Failed to generate plugin metadata: %v", err)
     }
