@@ -7,6 +7,7 @@ import (
     "os"
     "os/exec"
     "strings"
+    "encoding/json"
 )
 
 const version = "0.1.0"
@@ -21,6 +22,11 @@ func main() {
                 printHelp()
                 os.Exit(0)
         }
+    }
+
+    if len(os.Args) > 1 && os.Args[1] == "docker-cli-plugin-metadata" {
+        outputPluginMetadata()
+        os.Exit(0)
     }
 
     if len(os.Args) < 2 {
@@ -108,6 +114,29 @@ func runDockerCommand(args []string) {
     if err := cmd.Run(); err != nil {
         log.Fatalf("Failed to run docker command: %v", err)
     }
+}
+
+// outputPluginMetadata outputs the metadata for the Docker CLI plugin.
+func outputPluginMetadata() {
+    metadata := struct {
+        SchemaVersion    string `json:"SchemaVersion"`
+        Vendor           string `json:"Vendor"`
+        Version          string `json:"Version"`
+        ShortDescription string `json:"ShortDescription"`
+        URL              string `json:"URL"`
+    }{
+        SchemaVersion:   "0.1.0",
+        Vendor:          "Matthew Krafczyk",
+        Version:         version,
+        ShortDescription: "A utility designed to mimic the `singularity shell` command.",
+        URL:              "https://github.com/ncsa/docker-shell",
+    }
+
+    jsonOutput, err := json.MarshallIndent(metadata, "", "    ")
+    if err != nil {
+        log.Fatalf("Failed to generate plugin metadata: %v", err)
+    }
+    fmt.Println(string(jsonOutput))
 }
 
 // isBlockDevice checks if a given device is a block device.
