@@ -13,6 +13,11 @@ import (
 const version = "0.1.0"
 
 func main() {
+    // Remove 'shell' if it's the first argument. Needed for compatibility with Docker plugin system
+    if len(os.Args) > 1 && os.Args[1] == "shell" {
+        os.Args = append(os.Args[:1], os.Args[2:]...)
+    }
+
     for _, arg := range os.Args[1:] {
         switch arg {
             case "--version":
