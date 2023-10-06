@@ -67,7 +67,7 @@ func main() {
         log.Fatalf("Error getting hostname: %v", err)
     }
     containerName := os.Args[len(os.Args)-1]
-    customHostname := fmt.Sprintf("%s{docker|%s}", hostname, containerName)
+    customHostname := fmt.Sprintf("\"%s{docker|%s}\"", hostname, containerName)
 
     fmt.Println(customHostname)
 
