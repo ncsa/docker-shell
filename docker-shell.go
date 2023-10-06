@@ -13,22 +13,6 @@ import (
 const version = "0.2.0"
 
 func main() {
-    // Remove 'shell' if it's the first argument. Needed for compatibility with Docker plugin system
-    if len(os.Args) > 1 && os.Args[1] == "shell" {
-        os.Args = append(os.Args[:1], os.Args[2:]...)
-    }
-
-    for _, arg := range os.Args[1:] {
-        switch arg {
-            case "--version":
-                fmt.Println(version)
-                os.Exit(0)
-            case "--help":
-                printHelp()
-                os.Exit(0)
-        }
-    }
-
     if len(os.Args) > 1 && os.Args[1] == "docker-cli-plugin-metadata" {
         outputPluginMetadata()
         os.Exit(0)
@@ -39,14 +23,34 @@ func main() {
         os.Exit(1)
     }
 
-    // Check for --version and --help flags
-    switch os.Args[1] {
-    case "--version":
-        fmt.Println(version)
-        os.Exit(0)
-    case "--help":
-        printHelp()
-        os.Exit(0)
+    // Remove 'shell' if it's the first argument. Needed for compatibility with Docker plugin system
+    if len(os.Args) > 1 && os.Args[1] == "shell" {
+        os.Args = append(os.Args[:1], os.Args[2:]...)
+    }
+
+    verbose := false
+    for _, arg := range os.Args[1:] {
+        switch arg {
+            case "--version":
+                fmt.Println(version)
+                os.Exit(0)
+            case "--help":
+                printHelp()
+                os.Exit(0)
+            case "--verbose":
+                verbose = true
+        }
+    }
+
+    if verbose {
+        // Strip the verbose flag
+        new_args = []string{}
+        for _, arg := range os.Args {
+            if arg != "--verbose" {
+                new_args = append(new_args, arg)
+            }
+        }
+        os.Args = new_args
     }
 
     // Get the df output
@@ -75,7 +79,7 @@ func main() {
     cmdArgs := constructDockerRunCommand(volumeArgs, customHostname, os.Args[1:])
 
     // Run the docker command
-    runDockerCommand(cmdArgs)
+    runDockerCommand(cmdArgs, verbose)
 }
 
 // printHelp displays the help message
@@ -111,8 +115,12 @@ func constructDockerRunCommand(volumeArgs []string, customHostname string, addit
 }
 
 // runDockerCommand executes the docker command with given arguments.
-func runDockerCommand(args []string) {
+func runDockerCommand(args []string, verbose bool) {
     cmd := exec.Command("docker", args...)
+    if verbose {
+        fmt.Println("Running docker command:")
+        fmt.Println(cmd.String())
+    }
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
     cmd.Stdin = os.Stdin
