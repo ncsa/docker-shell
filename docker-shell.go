@@ -44,7 +44,7 @@ func main() {
 
     if verbose {
         // Strip the verbose flag
-        new_args = []string{}
+        new_args := []string{}
         for _, arg := range os.Args {
             if arg != "--verbose" {
                 new_args = append(new_args, arg)
