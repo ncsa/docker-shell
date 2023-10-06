@@ -10,7 +10,7 @@ import (
     "encoding/json"
 )
 
-const version = "0.2.0"
+const version = "0.2.1"
 
 func main() {
     if len(os.Args) > 1 && os.Args[1] == "docker-cli-plugin-metadata" {
@@ -71,9 +71,7 @@ func main() {
         log.Fatalf("Error getting hostname: %v", err)
     }
     containerName := os.Args[len(os.Args)-1]
-    customHostname := fmt.Sprintf("\"%s{docker|%s}\"", hostname, containerName)
-
-    fmt.Println(customHostname)
+    customHostname := fmt.Sprintf("%s{docker|%s}", hostname, containerName)
 
     // Constructing the docker run command
     cmdArgs := constructDockerRunCommand(volumeArgs, customHostname, os.Args[1:])
